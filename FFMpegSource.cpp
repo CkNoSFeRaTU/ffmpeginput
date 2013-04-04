@@ -10,37 +10,6 @@
  5) playlist support
 */
 
-static AVStream* open_stream(AVFormatContext* format_context, int type) {
-        assert(format_context != NULL);
-
-        int index;
-        AVStream* stream = NULL;
-        // Find stream index
-        for (index = 0; index < format_context->nb_streams; ++index) {
-                if (format_context->streams[index]->codec->codec_type == type) {
-                        stream = format_context->streams[index];
-                        break;
-                }
-        }
-        if (stream == NULL) {
-                // Stream index not found
-                return NULL;
-        }
-
-        AVCodecContext* codec_context = stream->codec;
-
-        // Find suitable codec
-        AVCodec* codec = avcodec_find_decoder(codec_context->codec_id);
-        if (codec == NULL) {
-                return NULL;
-        }
-        if (avcodec_open2(codec_context, codec, NULL) < 0) {
-                return NULL;
-        }
-
-        return stream;
-}
-
 void PacketQueue::put(AVPacket *pkt)
 {
     AVPacketList *pkt1;
@@ -218,7 +187,7 @@ int VideoState::queue_picture(AVFrame *pFrame, double pts)
     // windex is set to 0 initially
     vp = &this->pictq[this->pictq_windex];
 
-    // Convert the image into RGBA format for Ogre
+    // Convert the image into RGB32 format
     if(this->sws_context == NULL)
     {
         int w = (*this->video_st)->codec->width;
@@ -442,10 +411,19 @@ int VideoState::init(String filename)
     unsigned int i;
 
     AVDictionary *options = NULL;
-    av_dict_set(&options, "rtsp_transport", "tcp", 0);
+    AVInputFormat* avInfo = NULL;
+
+    if (filename.Length()>7 && filename.Left(7).CompareI(TEXT("rtsp://")))
+        av_dict_set(&options, "rtsp_transport", "tcp", 0);
 
     if (filename.Length()>7 && filename.Left(7).CompareI(TEXT("rtmp://")))
         filename << " live=1";
+
+    if (filename.Length()>8 && filename.Left(8).CompareI(TEXT("mjpeg://")))
+    {
+        filename.FindReplace(TEXT("mjpeg://"),TEXT("http://"));
+        avInfo = av_find_input_format("mjpeg");
+    }
 
     this->av_sync_type = AV_SYNC_VIDEO_MASTER;//AV_SYNC_DEFAULT;
     this->refresh_rate_ms = 10;
@@ -455,7 +433,7 @@ int VideoState::init(String filename)
     this->format_ctx = avformat_alloc_context();
 
     // Open video file
-    if(!this->format_ctx || avformat_open_input(&this->format_ctx, filename.CreateUTF8String(), NULL, &options) < 0)
+    if(!this->format_ctx || avformat_open_input(&this->format_ctx, filename.CreateUTF8String(), avInfo, &options) < 0)
     {
         // "Note that a user-supplied AVFormatContext will be freed on failure."
         this->format_ctx = NULL;

@@ -1,19 +1,33 @@
-Simple ffmpeginput plugin for OBS (http://obsproject.com)
+What it is
+==========
+>It is simple ffmpeginput plugin for [OBS](http://obsproject.com/ "Official Website") 
 
-This piece of code created during researching of OBSApi architecture,
-so don't take anything here seriously. ^_^
+>This piece of code created during researching of OBSApi architecture,
+>so don't take anything here seriously. ^_^
 
-Dependencies:
-    1) FFMpeg libraries:
-        * libavformat
-        * libavcodec
-        * libavresample
-        * libswscale
-        * libavutil
-    2) Boost libraries:
-        * libboost_chrono
-        * libboost_date_time
-        * libboost_system
-        * libboost_thread
+>Supported OBS version: __0.473b__
 
-Supported OBS version: 0.473b
+Dependencies
+============
+1) FFMpeg libraries
+-------------------
+
+* libavformat
+* libavcodec
+* libavresample
+* libswscale
+* libavutil
+
+2) Boost libraries
+------------------
+* libboost_chrono
+* libboost\_date\_time
+* libboost_system
+* libboost_thread
+
+ToDo
+====
+* audio support
+* frame dropping
+* nonblocked init stage
+* playback controls, settings, seek, etc...
