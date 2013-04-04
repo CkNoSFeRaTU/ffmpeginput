@@ -42,6 +42,8 @@ BEGIN
     PUSHBUTTON      "Add File",IDC_ADDFILE,250,53,81,14
     EDITTEXT        IDC_EDITURL,10,23,237,14,ES_AUTOHSCROLL
     LTEXT           "Sources.FFMpegSource.URL",-1,5,12,164,8
+    CONTROL         "Sources.FFMpegSource.Random",IDC_RANDOM,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,251,90,77,10
+    CONTROL         "Sources.FFMpegSource.Repeat",IDC_REPEAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,251,103,77,10
 END
 
 

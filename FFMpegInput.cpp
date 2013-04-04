@@ -23,7 +23,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
     {
         case WM_INITDIALOG:
             {
-				ConfigFFMpegSourceInfo *configInfo = (ConfigFFMpegSourceInfo*)lParam;
+                ConfigFFMpegSourceInfo *configInfo = (ConfigFFMpegSourceInfo*)lParam;
                 SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)configInfo);
                 LocalizeWindow(hwnd, pluginLocale);
 
@@ -43,6 +43,14 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 //--------------------------
 
+                hwndTemp = GetDlgItem(hwnd, IDC_RANDOM);
+                bool bRandom = configInfo->data->GetInt(TEXT("random")) != 0;
+                SendMessage(hwndTemp, BM_SETCHECK, bRandom ? BST_CHECKED : BST_UNCHECKED, 0);
+
+                hwndTemp = GetDlgItem(hwnd, IDC_REPEAT);
+                bool bRepeat = configInfo->data->GetInt(TEXT("repeat")) != 0;
+                SendMessage(hwndTemp, BM_SETCHECK, bRepeat ? BST_CHECKED : BST_UNCHECKED, 0);
+
                 EnableWindow(GetDlgItem(hwnd, IDC_REMOVE), FALSE);
                 EnableWindow(GetDlgItem(hwnd, IDC_MOVEUPWARD), FALSE);
                 EnableWindow(GetDlgItem(hwnd, IDC_MOVEDOWNWARD), FALSE);
@@ -58,17 +66,17 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         TSTR lpFile = (TSTR)Allocate(255*sizeof(TCHAR));
                         zero(lpFile, 255*sizeof(TCHAR));
 
--						GetDlgItemText(hwnd, IDC_EDITURL, (LPTSTR)lpFile, 255);
+                        GetDlgItemText(hwnd, IDC_EDITURL, (LPTSTR)lpFile, 255);
 
-						String strPath = lpFile;
+                        String strPath = lpFile;
 
-						UINT idExisting = (UINT)SendMessage(GetDlgItem(hwnd, IDC_FILES), LB_FINDSTRINGEXACT, -1, (LPARAM)strPath.Array());
+                        UINT idExisting = (UINT)SendMessage(GetDlgItem(hwnd, IDC_FILES), LB_FINDSTRINGEXACT, -1, (LPARAM)strPath.Array());
                         if(idExisting == LB_ERR)
                             SendMessage(GetDlgItem(hwnd, IDC_FILES), LB_ADDSTRING, 0, (LPARAM)strPath.Array());
 
                         Free(lpFile);
-					}
-					break;
+                    }
+                    break;
 
                 case IDC_ADDFILE:
                     {
@@ -81,7 +89,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
                         ofn.lpstrFile = lpFile;
                         ofn.hwndOwner = hwnd;
                         ofn.nMaxFile = 32*1024*sizeof(TCHAR);
-                        ofn.lpstrFilter = TEXT("All Formats (*.avi;*.mkv;*.mp4;*.ogg;*.flv)\0*.avi;*.mkv;*.mp4;*.ogg;*.flv\0");
+
+                        ofn.lpstrFilter = TEXT("FFMpeg Supported Files (*.anm;*.asf;*.avi;*.bik;*.dts;*.dxa;*.flv;*.fli;*.flc;*.flx;*.h261;*.h263;*.h264;*.m4v;*.mkv;*.mjp;*.mlp;*.mov;*.mp4;*.3gp;*.3g2;*.mj2;*.mvi;*.pmp;*.rm;*.rmvb;*.rpl;*.smk;*.swf;*.vc1;*.wmv;*.ts;*.vob;*.mts;*.m2ts;*.m2t;*.mpg;*.mxf;*.ogm;*.qt;*.tp;*.dvr-ms;*.amv)\0*.anm;*.asf;*.avi;*.bik;*.dts;*.dxa;*.flv;*.fli;*.flc;*.flx;*.h261;*.h263;*.h264;*.m4v;*.mkv;*.mjp;*.mlp;*.mov;*.mp4;*.3gp;*.3g2;*.mj2;*.mvi;*.pmp;*.rm;*.rmvb;*.rpl;*.smk;*.swf;*.vc1;*.wmv;*.ts;*.vob;*.mts;*.m2ts;*.m2t;*.mpg;*.mxf;*.ogm;*.qt;*.tp;*.dvr-ms;*.amv\0");
                         ofn.nFilterIndex = 1;
                         ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER;
 
@@ -114,8 +123,8 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         Free(lpFile);
 
-                        break;
-					}
+                    }
+                    break;
 
                 case IDC_FILES:
                     if(HIWORD(wParam) == LBN_SELCHANGE)
@@ -179,7 +188,7 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                 case IDOK:
                     {
-						HWND hwndFiles = GetDlgItem(hwnd, IDC_FILES);
+                        HWND hwndFiles = GetDlgItem(hwnd, IDC_FILES);
 
                         UINT numFiles = (UINT)SendMessage(hwndFiles, LB_GETCOUNT, 0, 0);
                         if(!numFiles)
@@ -198,7 +207,11 @@ INT_PTR CALLBACK ConfigureDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPA
 
                         configInfo->data->SetStringList(TEXT("files"), filesList);
 
-						}
+                        BOOL bRandom = SendMessage(GetDlgItem(hwnd, IDC_RANDOM), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        BOOL bRepeat = SendMessage(GetDlgItem(hwnd, IDC_REPEAT), BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        configInfo->data->SetInt(TEXT("random"), bRandom);
+                        configInfo->data->SetInt(TEXT("repeat"), bRepeat);
+                    }
 
                 case IDCANCEL:
                     EndDialog(hwnd, LOWORD(wParam));
@@ -227,9 +240,9 @@ bool STDCALL ConfigureFFMpegInputSource(XElement *element, bool bCreating)
 
     if(DialogBoxParam(hinstMain, MAKEINTRESOURCE(IDD_CONFIGUREFFMPEGSOURCE), API->GetMainWindow(), ConfigureDialogProc, (LPARAM)&configInfo) == IDOK)
     {
-		element->SetInt(TEXT("cx"), 640);
-		element->SetInt(TEXT("cy"), 480);
-	}
+        element->SetInt(TEXT("cx"), 640);
+        element->SetInt(TEXT("cy"), 480);
+    }
 
     return true;
 
@@ -237,7 +250,7 @@ bool STDCALL ConfigureFFMpegInputSource(XElement *element, bool bCreating)
 
 ImageSource* STDCALL CreateFFMpegInputSource(XElement *data)
 {
-	FFMpegSource *source = new FFMpegSource;
+    FFMpegSource *source = new FFMpegSource;
     if(!source->Init(data))
     {
         delete source;

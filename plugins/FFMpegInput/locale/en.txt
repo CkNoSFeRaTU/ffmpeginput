@@ -7,6 +7,8 @@ Sources.FFMpegSource "FFMpeg Source Files or Urls"
 Sources.FFMpegSource.Empty "No files or urls entered! Please browse and select a file or enter a url"
 Sources.FFMpegSource.Files "Files or URLs:"
 Sources.FFMpegSource.URL "Enter URL:"
+Sources.FFMpegSource.Repeat "Repeat"
+Sources.FFMpegSource.Random "Random"
 
 Plugin.Description  "This plugin allows you to add any ffmpeg supported protocol or file format as source"
 Plugin.Name         "FFmpeg Input Plugin"

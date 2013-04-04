@@ -11,6 +11,9 @@
 #define IDC_MOVEDOWNWARD                1058
 #define IDC_ADDFILE                     1059
 #define IDC_FILES                       1090
+#define IDC_RANDOM                      1141
+#define IDC_USECFR2                     1143
+#define IDC_REPEAT                      1143
 
 // Next default values for new objects
 // 

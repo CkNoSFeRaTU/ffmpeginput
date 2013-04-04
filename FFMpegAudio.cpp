@@ -50,9 +50,9 @@ bool FFMpegAudioSource::Initialize(FFMpegSource *parent)
     DWORD inputChannelMask;
 
     //---------------------------------
-	//32/8/n - AV_SAMPLE_FMT_S32
-	//16/4/n - AV_SAMPLE_FMT_S16
-	//16/8/y - AV_SAMPLE_FMT_FLT
+    //32/8/n - AV_SAMPLE_FMT_S32
+    //16/4/n - AV_SAMPLE_FMT_S16
+    //16/8/y - AV_SAMPLE_FMT_FLT
 
     inputBitsPerSample = 16;//device->audioFormat.wBitsPerSample;
     inputBlockSize     = 4;//device->audioFormat.nBlockAlign;
