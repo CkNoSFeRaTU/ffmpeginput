@@ -65,7 +65,7 @@ bool FFMpegAudioSource::Initialize(FFMpegSource *parent)
 
     outputBuffer.SetSize(sampleSegmentSize);
 
-    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask);
+    InitAudioData(bFloat, inputChannels, inputSamplesPerSec, inputBitsPerSample, inputBlockSize, inputChannelMask, false);
 
     return true;
 }

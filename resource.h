@@ -3,7 +3,6 @@
 // Used by FFMpegSource.rc
 //
 #define IDD_CONFIGUREFFMPEGSOURCE       135
-#define IDC_EDIT1                       1001
 #define IDC_EDITURL                     1001
 #define IDC_ADDURL                      1054
 #define IDC_REMOVE                      1055
@@ -12,7 +11,6 @@
 #define IDC_ADDFILE                     1059
 #define IDC_FILES                       1090
 #define IDC_RANDOM                      1141
-#define IDC_USECFR2                     1143
 #define IDC_REPEAT                      1143
 
 // Next default values for new objects

@@ -1,15 +1,6 @@
 #include "FFMpegInput.h"
 #include <string.h>
 
-/*
- TODO
- 1) implement audio
- 2) move syncing to decoding stage and implement frame dropping
- 3) init stage must be threaded too or workarounded for nonblocking
- 4) playback controls, settings, seek, etc...
- 5) playlist support
-*/
-
 void PacketQueue::put(AVPacket *pkt)
 {
     AVPacketList *pkt1;
@@ -404,22 +395,30 @@ int VideoState::stream_open(int stream_index, AVFormatContext *pFormatCtx)
     return 0;
 }
 
+int interrupt_cb(void *args)
+{
+    VideoState *vs = (VideoState *)args;
+    if (vs->quit)
+        return 1;
+
+    return 0;
+}
+
 int VideoState::init(String filename)
 {
     int video_index = -1;
     int audio_index = -1;
     unsigned int i;
+    const AVIOInterruptCB int_cb = { interrupt_cb, this };
 
     AVDictionary *options = NULL;
-    AVInputFormat* avInfo = NULL;
+    AVInputFormat *avInfo = NULL;
 
     if (filename.Length()>7 && filename.Left(7).CompareI(TEXT("rtsp://")))
         av_dict_set(&options, "rtsp_transport", "tcp", 0);
-
-    if (filename.Length()>7 && filename.Left(7).CompareI(TEXT("rtmp://")))
+    else if (filename.Length()>7 && filename.Left(7).CompareI(TEXT("rtmp://")))
         filename << " live=1";
-
-    if (filename.Length()>8 && filename.Left(8).CompareI(TEXT("mjpeg://")))
+    else if (filename.Length()>8 && filename.Left(8).CompareI(TEXT("mjpeg://")))
     {
         filename.FindReplace(TEXT("mjpeg://"),TEXT("http://"));
         avInfo = av_find_input_format("mjpeg");
@@ -431,6 +430,7 @@ int VideoState::init(String filename)
     this->quit = false;
 
     this->format_ctx = avformat_alloc_context();
+    this->format_ctx->interrupt_callback = int_cb;
 
     // Open video file
     if(!this->format_ctx || avformat_open_input(&this->format_ctx, filename.CreateUTF8String(), avInfo, &options) < 0)
@@ -619,24 +619,32 @@ void FFMpegSource::Render(const Vect2 &pos, const Vect2 &size)
         vs->refresh = false;
         vs->video_refresh_timer();
 
-        // Correct aspect ratio by adding black bars
-        renderCX = (*vs->video_st)->codec->width;
-        renderCY = (*vs->video_st)->codec->height;
-
+        // Correct aspect ratio
         double videoaspect = av_q2d((*vs->video_st)->codec->sample_aspect_ratio);
         if(videoaspect == 0.0)
             videoaspect = 1.0;
         videoaspect *= static_cast<double>((*vs->video_st)->codec->width) / (*vs->video_st)->codec->height;
 
-        double screenaspect = static_cast<double>(renderCX) / renderCY;
+        double screenaspect = static_cast<double>((*vs->video_st)->codec->width) / (*vs->video_st)->codec->height;
         double aspect_correction = videoaspect / screenaspect;
 
-        /* TODO aspect correction currently not used */
+        renderCY = (*vs->video_st)->codec->height;
+        renderCX = (*vs->video_st)->codec->width * aspect_correction;
+    }
+
+    double ratio = renderCX/size.x;
+    double dest_x = renderCX/ratio;
+    double dest_y = renderCY/ratio;
+    if (dest_y > size.y)
+    {
+        ratio = renderCY/size.y;
+        dest_x = renderCX/ratio;
+        dest_y = renderCY/ratio;
     }
 
     if (vs->display_ready && vs->texture)
     {
-        DrawSprite(vs->texture, 0xFFFFFFFF, pos.x, pos.y, pos.x+size.x, pos.y+size.y);
+        DrawSprite(vs->texture, 0xFFFFFFFF, pos.x+(size.x-dest_x)/2, pos.y+(size.y-dest_y)/2, pos.x+(size.x-dest_x)/2+dest_x, pos.y+(size.y-dest_y)/2+dest_y);
     }
 
     traceOut;

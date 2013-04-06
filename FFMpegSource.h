@@ -141,10 +141,9 @@ struct VideoState {
     VideoPicture pictq[VIDEO_PICTURE_QUEUE_SIZE];
     AVFrame*     rgbaFrame; // used as buffer for the frame converted from its native format to RGBA
     int          pictq_size, pictq_rindex, pictq_windex;
+
     boost::mutex pictq_mutex;
     boost::condition_variable pictq_cond;
-
-
     boost::thread parse_thread;
     boost::thread video_thread;
     boost::thread audio_thread;
